@@ -22,9 +22,14 @@ def signup(request):
 
 
 def index(request):
+    categories = Category.objects.all()
+    category_id = request.GET.get('category', 0)
+    items = Item.objects.filter(is_sold=False)
+    
     context = {
-        'categories': Category.objects.all(),        
-        'items': Item.objects.filter(is_sold=False)[0:6],
+        'categories': categories, 
+        'category_id': category_id,       
+        'items': items,
     }
     return render(request, 'core/index.html', context)
 
