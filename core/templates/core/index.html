@@ -11,8 +11,10 @@
         <div>
             <a href="{% url 'item:detail' item.id %}">
                 <div>
-                    <img src="{{ item.image.url }}" alt="{{ item.image }}" class="rounded-t-xl">
+                    <img src="{{ item.images.all.0.images.url }}" alt="{{ item.images.all.0.images }}"
+                        class="rounded-t-xl">
                 </div>
+
 
                 <div class="p-6 bg-white rounded-b-xl">
                     <h2 class="text-xl md:text-2xl">{{ item.name }}</h2>

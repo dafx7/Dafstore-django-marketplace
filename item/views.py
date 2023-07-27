@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 
-from .models import Item, Category
+from .models import Item, Category, ItemImage
 from .forms import NewItemForm, EditItemForm
 
 
@@ -17,7 +17,8 @@ def items(request):
         items = items.filter(category=category_id)
 
     if query:
-        items = items.filter(Q(name__contains=query) | Q(description__contains=query))
+        items = items.filter(Q(name__contains=query) |
+                             Q(description__contains=query))
 
     context = {
         'items': items,
@@ -30,8 +31,10 @@ def items(request):
 
 def detail(request, pk):
     item = get_object_or_404(Item, pk=pk)
+    images = item.images.all
     context = {
         'item': item,
+        'images': images,
         'related_items': Item.objects.filter(category=item.category, is_sold=False).exclude(pk=pk)[0:3],
     }
     return render(request, 'item/details.html', context)
@@ -41,11 +44,14 @@ def detail(request, pk):
 def new(request):
     if request.method == 'POST':
         form = NewItemForm(request.POST, request.FILES)
+        uploaded_images = request.FILES.getlist('images')
+
         if form.is_valid():
             item = form.save(commit=False)
             item.created_by = request.user
             item.save()
-
+            for i in uploaded_images:
+                ItemImage(item=item, images=i).save()
             return redirect('item:detail', pk=item.id)
     else:
         form = NewItemForm()
@@ -64,9 +70,12 @@ def edit(request, pk):
 
     if request.method == 'POST':
         form = EditItemForm(request.POST, request.FILES, instance=item)
+        uploaded_images = request.FILES.getlist('images')
         if form.is_valid():
-            form.save()
-
+            item = form.save()
+            ItemImage.objects.all().filter(item=item).delete()
+            for i in uploaded_images:
+                ItemImage(item=item, images=i).save()
             return redirect('item:detail', pk=item.id)
     else:
         form = EditItemForm(instance=item)
